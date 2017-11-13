@@ -1,0 +1,114 @@
+*awk-ward.txt*   Run Awk programs in Neovim
+                                                               *awk-ward.nvim*
+               ___           __                                __~
+              /   |_      __/ /__     _      ______ __________/ /~
+             / /| | | /| / / //_/____| | /| / / __ `/ ___/ __  /~
+            / ___ | |/ |/ / ,< /_____/ |/ |/ / /_/ / /  / /_/ /~
+           /_/  |_|__/|__/_/|_|      |__/|__/\__,_/_/   \__,_/~
+
+Author: Alejandro "HiPhish" Sanchez
+License: MIT License
+
+
+==============================================================================
+TABLE OF CONTENTS                                          *awk-ward-contents*
+
+    1. Introduction...................................... |awk-ward-intro|
+    2. Setup and configuration........................... |awk-ward-setup|
+    3. Commands.......................................... |awk-ward-commands|
+    4. Functions......................................... |awk-ward-functions|
+    5. Advanced.......................................... |awk-ward-advanced|
+
+
+
+==============================================================================
+INTRODUCTION                                           *awk-ward-introduction*
+
+Awk is a domain-specific programming language for transforming text files. As
+such regular REPL is not appropriate for running Awk programs live, we need
+two separate inputs: the program and the text to transform. Awk-ward makes it
+easy to edit and preview your Awk scripts live by spawning an Awk process and
+writing the result to an output buffer.
+
+ 
+
+==============================================================================
+SETUP AND CONFIGURATION                                       *awk-ward-setup*
+
+You first need a standalone implementation of Awk installed on your system. A
+Unix system should come with the `awk` command already set up. If you wish to
+specify your own Awk implementation you can set the value of the |g:awkprg| or
+|b:awkprg| variable to the path of the binary.
+
+
+------------------------------------------------------------------------------
+g:awkprg (default "awk")                                            *g:awkprg*
+
+Global setting for the path to the Awk binary. See also |b:awkprg|.
+
+
+------------------------------------------------------------------------------
+b:awkprg                                                            *b:awkprg*
+
+Similar to |g:awkprg|, but local to a specific buffer.
+
+
+
+==============================================================================
+COMMANDS                                                   *awk-ward-commands*
+
+------------------------------------------------------------------------------
+                                                                    *:AwkWard*
+:AwkWard [-F {fs}] [-v {var}={value} ...] [-inbuf {b} | -infile {f}]
+
+The main command. If run for the first time on a buffer it sets up Awk-ward
+and performs an initial run. If Awk-ward had already been set up for that
+buffer, this command will re-run Awk-ward with the previous settings.
+
+The option `-F` options passes {fs} as the record seperator to Awk.
+
+The `-v` option passes {value} as the {var} to Awk. There can be mutliple such
+pairs given and they will all get passed to Awk. Use `\=` to escape `=` in the
+names of {var} and {value}, the escape will be removed before passing them on
+the Awk.
+
+`-infile` and `-inbuf` are mutually exclusive and specify the input file or
+input buffer to use. If a file is chose no input buffer will be opened. If
+none are specified then a new 'nofile' input buffer will be created.
+
+The further handling of `-F` and `-v` is dependent on your Awk implementation.
+
+
+
+==============================================================================
+FUNCTIONS                                                 *awk-ward-functions*
+
+------------------------------------------------------------------------------
+SetupAwkWard({b}, {args})                                     *SetupAwkWard()*
+
+Set up Awk-ward with the settings {args} for buffer handle {b}. {args} is a
+list whose contents are the same as the arguments accepted by |:AwkWard|.
+
+
+------------------------------------------------------------------------------
+RunAwkWard({b})                                                 *RunAwkWard()*
+
+Run Awk-ward on the buffer {b}. It is an error to run AwkWard if it has not
+yet been set up.
+
+
+==============================================================================
+ADVANCED                                                   *awk-ward-advanced*
+
+------------------------------------------------------------------------------
+b:awk_ward                                                        *b:awk_ward*
+
+Dictionary holding various Awk-ward settings for a buffer. Check for the
+existence of this variable if you want to know whether Awk-ward has been set
+up for a buffer.
+
+ 
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
+
