@@ -84,17 +84,25 @@ The further handling of `-F` and `-v` is dependent on your Awk implementation.
 FUNCTIONS                                                 *awk-ward-functions*
 
 ------------------------------------------------------------------------------
-SetupAwkWard({b}, {args})                                     *SetupAwkWard()*
+AwkWardSetup({b}, {args})                                     *AwkWardSetup()*
 
 Set up Awk-ward with the settings {args} for buffer handle {b}. {args} is a
 list whose contents are the same as the arguments accepted by |:AwkWard|.
 
 
 ------------------------------------------------------------------------------
-RunAwkWard({b})                                                 *RunAwkWard()*
+AwkWardRun({b})                                                 *AwkWardRun()*
 
 Run Awk-ward on the buffer {b}. It is an error to run AwkWard if it has not
 yet been set up.
+
+
+------------------------------------------------------------------------------
+AwkWardStop({b})                                               *AwkWardStop()*
+
+Wipe the output buffer (if it exists) and the output buffer associated with
+the program buffer {b}, and delete the |b:awk_ward| variable.
+
 
 
 ==============================================================================
