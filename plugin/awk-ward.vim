@@ -251,6 +251,7 @@ function! s:awk_ward(cmd, progbuf, progfile, in, out)
 
 	" Delete the output buffer contents
 	call s:set_buf_contents(a:out, 0, -1, [])
+	call nvim_buf_set_var(a:out, 'awk_ward_blank', v:true)
 
 	let l:opts = {
 		\ 'on_stdout': {id, data, evt -> s:on_stdout(a:out, id, data, evt)},
@@ -269,7 +270,8 @@ endfunction
 "  Handle the standard output of an Awk process.
 " ----------------------------------------------------------------------------
 function! s:on_stdout(out, id, data, evt)
-	call s:set_buf_contents(a:out, -1, -1, a:data)
+	let l:from = nvim_buf_get_var(a:out, 'awk_ward_blank') ? 0 : -1
+	call s:set_buf_contents(a:out, l:from, -1, a:data)
 endfunction
 
 " ----------------------------------------------------------------------------
