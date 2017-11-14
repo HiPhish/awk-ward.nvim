@@ -73,10 +73,10 @@ names of {var} and {value}, the escape will be removed before passing them on
 the Awk.
 
 `-infile` and `-inbuf` are mutually exclusive and specify the input file or
-input buffer to use. If a file is chose no input buffer will be opened. If
+input buffer to use. If a file is chosen no input buffer will be opened. If
 none are specified then a new 'nofile' input buffer will be created.
 
-The further handling of `-F` and `-v` is dependent on your Awk implementation.
+The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 
 
 

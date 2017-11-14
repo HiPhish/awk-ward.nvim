@@ -48,9 +48,9 @@ function! AwkWard(...)
 	let l:prog = nvim_get_current_buf()
 	" If Awk-ward was established for this buffer run it, otherwise set it up
 	try
-		call RunAwkWard(l:prog)
+		call AwkWardRun(l:prog)
 	catch
-		call SetupAwkWard(l:prog, a:000)
+		call AwkWardSetup(l:prog, a:000)
 	endtry
 endfunction
 
@@ -63,27 +63,27 @@ function! AwkWardSetup(prog, args)
 	let l:kwargs = {'vars': []}
 	" Process arguments
 	let l:i = 0
-	while l:i < len(a:000)
-		let l:arg = a:000[l:i]
+	while l:i < len(a:args)
+		let l:arg = a:args[l:i]
 		if l:arg ==# '-F'
 			let l:i += 1
-			let l:kwargs['fs'] = a:000[l:i]
+			let l:kwargs['fs'] = a:args[l:i]
 		elseif l:arg ==# '-v'
 			let l:i += 1
 			" Split on =, but not on \= (that's an escaped =)
-			let [l:var, l:val] = split(a:000[l:i], '\v[^\\]\zs\=')
+			let [l:var, l:val] = split(a:args[l:i], '\v[^\\]\zs\=')
 			" Substitute \= with = (to un-escape the =)
 			let l:var = substitute(l:var, '\v\\\=', '=', 'g')
 			let l:val = substitute(l:val, '\v\\\=', '=', 'g')
 
 			call add(l:kwargs.var, [l:var, l:val])
-			let l:kwargs['fs'] = a:000[l:i]
+			let l:kwargs['fs'] = a:args[l:i]
 		elseif l:arg ==# '-inbuf'
 			let l:i += 1
-			let l:kwargs['inbuf'] = a:000[l:i]
+			let l:kwargs['inbuf'] = a:args[l:i]
 		elseif l:arg ==# '-infile'
 			let l:i += 1
-			let l:kwargs['infile'] = a:000[l:i]
+			let l:kwargs['infile'] = a:args[l:i]
 		else
 			throw 'Awk-ward: unknown option ' . l:arg
 		endif
@@ -123,9 +123,11 @@ function! AwkWardStop(buf)
 
 	execute 'bwipeout' l:awk_ward['out']
 	if has_key(l:awk_ward, 'inbuf')
-		execute 'bwipeout' l:awk_ward['inbuf']
+		execute 'autocmd! awk_ward_'.a:buf
+		if l:awk_ward['wipe_in']
+			execute 'bwipeout' l:awk_ward['inbuf']
+		endif
 	endif
-
 	call nvim_buf_del_var(a:buf, 'awk_ward')
 endfunction
 
@@ -157,19 +159,19 @@ function! s:prepare_awkward(prog, kwargs)
 		let l:awk_cmd = [ 'awk']
 	endif
 
-	" Record seperator
+	" Process option: Record seperator
 	if has_key(a:kwargs, 'fs')
 		let l:awk_cmd = extend(l:awk_cmd, ['-F', a:kwargs.fs])
 	endif
 
-	" Append variable definitions
+	" Process option: Append variable definitions
 	if has_key(a:kwargs, 'vars')
 		for [l:var, l:val] in a:kwargs.vars
 			call add(l:awk_cmd, ['-v', l:val.'='.l:var])
 		endfor
 	endif
 
-	" Append the program file
+	" Process option: Append the program file
 	let a:kwargs['progfile'] = tempname()
 	call extend(l:awk_cmd, ['-f', a:kwargs.progfile])
 
@@ -178,21 +180,23 @@ function! s:prepare_awkward(prog, kwargs)
 	let l:outbuf = nvim_get_current_buf()
 	call nvim_buf_set_option(l:outbuf, 'buftype', 'nofile')
 	call nvim_buf_set_option(l:outbuf, 'modifiable', v:false)
-	call nvim_buf_set_name(l:outbuf, 'Awk-ward output')
+	call nvim_buf_set_name(l:outbuf, 'Awk-ward output('.a:prog.')')
 
+	" Use input file or input buffer
 	if has_key(a:kwargs, 'infile')
 		call add(l:awk_cmd, a:kwargs.infile)
 	elseif has_key(a:kwargs, 'inbuf')
+		let l:dedicated_input = v:false
 		call add(l:awk_cmd, '-')
 	else
+		let l:dedicated_input = v:true
 		call add(l:awk_cmd, '-')
 		new  | "Create a new buffer
-		let l:inwin = nvim_get_current_win()
 		let a:kwargs.inbuf = nvim_get_current_buf()
 		" Set input-buffer options
 		call nvim_buf_set_option(a:kwargs.inbuf, 'buftype', 'nofile')
 		call nvim_buf_set_option(a:kwargs.inbuf, 'modifiable', v:true)
-		call nvim_buf_set_name(a:kwargs.inbuf, 'Awk-ward input')
+		call nvim_buf_set_name(a:kwargs.inbuf, 'Awk-ward input('.a:prog.')')
 	endif
 
 	" Build a function to be called when Awk is invoked on the program buffer
@@ -202,30 +206,32 @@ function! s:prepare_awkward(prog, kwargs)
 	call nvim_set_current_win(l:progwin)
 
 	" A new buffer for input was created, set up the auto command
-	" TODO: the auto command has to be set up even if the buffer did already
-	" exists
-	if exists('l:inwin')
-		call nvim_set_current_win(l:inwin)
+	if has_key(a:kwargs, 'inbuf')
 		" Must set up autocommand here
-		let l:callback = 'call s:awk_ward(['
+		let l:auto_callback = 'call s:awk_ward(['
 		for l:arg in l:awk_cmd
-			let l:callback .= ''''.l:arg.''''.', '
+			let l:auto_callback .= ''''.l:arg.''''.', '
 		endfor
-		let l:callback .= '], '.a:prog.', '''.l:progfile.''', '.l:in.', '.l:outbuf.')'
+		let l:auto_callback .= '], '.a:prog.', '''.l:progfile.''', '.l:in.', '.l:outbuf.')'
 
-		augroup awk_ward
+		exe 'augroup awk_ward_'.a:prog 
 			au!
-			exe 'au TextChanged,InsertLeave <buffer> '.l:callback
+			exe 'au TextChanged,InsertLeave <buffer='.a:kwargs['inbuf'].'> '.l:auto_callback
 		augroup END
-		call nvim_set_current_win(l:progwin)
 	endif
 
 	" Build the Awk-ward settings dictionary
+	"   callback  Function to call to run Awk-ward
+	"   out       Buffer handle for output
+	"   infile    File name of input (conflicts with inbuf)
+	"   inbuf     Buffer handle of input (conflicts with infile)
+	"   wipe_in   Whether to wipe the input buffer (only if inbuf exists)
 	let b:awk_ward = {'callback': l:Callback, 'out': l:outbuf}
 	if has_key(a:kwargs, 'infile')
 		let b:awk_ward['infile'] = a:kwargs.infile
 	else
 		let b:awk_ward['inbuf'] = a:kwargs.inbuf
+		let b:awk_ward['wipe_in'] = l:dedicated_input
 	endif
 
 	call l:Callback()
