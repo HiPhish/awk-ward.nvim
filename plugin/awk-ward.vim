@@ -36,7 +36,7 @@ let g:awk_ward_nvim = v:true
 "    -inbuf    Buffer handle of the input buffer
 "    -infile   File name of input file
 " ----------------------------------------------------------------------------
-command! -nargs=* AwkWard :call AwkWard(<f-args>)
+command! -nargs=* -complete=customlist,s:complete_awk AwkWard :call AwkWard(<f-args>)
 
 
 " ===[ PUBLIC FUNCTIONS ]=====================================================
@@ -45,12 +45,24 @@ command! -nargs=* AwkWard :call AwkWard(<f-args>)
 "  Function version of the AwkWard command
 " ----------------------------------------------------------------------------
 function! AwkWard(...)
-	let l:prog = nvim_get_current_buf()
+	let l:curbuf = nvim_get_current_buf()
+
+	if a:0 >= 1 && a:000[0] ==# 'setup'
+		call AwkWardSetup(l:curbuf, a:000[1 :])
+		return
+	elseif a:0 == 1 && a:000[0] ==# 'run'
+		call AwkWardRun(l:curbuf)
+		return
+	elseif a:0 == 1 && a:000[0] ==# 'stop'
+		call AwkWardStop(l:curbuf)
+		return
+	endif
+
 	" If Awk-ward was established for this buffer run it, otherwise set it up
 	try
-		call AwkWardRun(l:prog)
+		call AwkWardRun(l:curbuf)
 	catch
-		call AwkWardSetup(l:prog, a:000)
+		call AwkWardSetup(l:curbuf, a:000)
 	endtry
 endfunction
 
@@ -276,4 +288,51 @@ function! s:set_buf_contents(buf, from, to, lines)
 	call nvim_buf_set_lines(a:buf, a:from, a:to, v:false, a:lines)
 	call nvim_buf_set_option(a:buf, 'modifiable', v:false)
 	call nvim_buf_set_option(a:buf, 'modified', v:false)
+endfunction
+
+
+
+" ----------------------------------------------------------------------------
+"  Completion function
+" ----------------------------------------------------------------------------
+function! s:complete_awk(ArgLead, CmdLine, CursorPos)
+	let l:args = split(a:CmdLine, '\v[^\\]\zs ')
+	if len(l:args) == 1
+		if exists('b:awk_ward')
+			return ['run', 'stop']
+		else
+			return ['setup', '-F', '-v', '-prog', '-inbuf', '-infile']
+		endif
+	endif
+
+	if len(l:args) == 2 && l:args[1] ==# 'run' && a:ArgLead !=# 'run'
+		return map(getcompletion('', 'buffer'), {_,v->string(bufnr(v))})
+	endif
+
+	if len(l:args) == 2 && l:args[1] ==# 'stop' && a:ArgLead !=# 'stop'
+		return map(getcompletion('', 'buffer'), {_,v->string(bufnr(v))})
+	endif
+
+	if len(l:args) == 2 && l:args[1] ==# 'setup' && a:ArgLead !=# 'setup'
+		return ['-F', '-v', '-inbuf', '-infile']
+	endif
+
+	" Fall back on default behaviour, same as ':AwkWad setup'
+	let l:args = l:args[1 :]
+	if l:args[0] ==# 'setup'
+		let l:args = l:args[1 :]
+	endif
+	let l:comps = []
+	if index(l:args, '-F') == -1
+		call add(l:comps, '-F')
+	endif
+	call add(l:comps, '-v')
+	if index(l:args, '-prog') == -1
+		call add(l:comps, '-prog')
+	endif
+	if index(l:args, '-inbuf') == -1 && index(l:args, '-infile') == -1
+		call extend(l:comps, ['-inbuf', '-infile'])
+	endif
+
+	return l:comps
 endfunction

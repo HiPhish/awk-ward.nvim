@@ -59,24 +59,42 @@ COMMANDS                                                   *awk-ward-commands*
 
 ------------------------------------------------------------------------------
                                                                     *:AwkWard*
+:AwkWard setup [-F {fs}] [-v {var}={value} ...] [-inbuf {b} | -infile {f}]
+:AwkWard run
+:AwkWard stop
+
 :AwkWard [-F {fs}] [-v {var}={value} ...] [-inbuf {b} | -infile {f}]
 
-The main command. If run for the first time on a buffer it sets up Awk-ward
-and performs an initial run. If Awk-ward had already been set up for that
-buffer, this command will re-run Awk-ward with the previous settings.
+The main command allows one to set up, run and stop Awk-ward in the current
+buffer. If none of the main commands are given the action depends on the state
+of Awk-ward in the current buffer.
+
+    - If Awk-ward was not set up it is equivalent to issuing `setup` with all
+      options passed, followed by `run`
+    - If Awk-ward was set up it is equivalent to issuing `run`, options are
+      ignored.
+
+Setup~
+Same as calling |AwkWardSetup()| with the current buffer as first argument.
 
 The option `-F` options passes {fs} as the record seperator to Awk.
 
 The `-v` option passes {value} as the {var} to Awk. There can be mutliple such
-pairs given and they will all get passed to Awk. Use `\=` to escape `=` in the
-names of {var} and {value}, the escape will be removed before passing them on
-to Awk. Each individual {var}={value} pair must be preceeded by `-v`.
+pairs given and they will all get passed to Awk. Use `\=` to escape `=` in
+{var} and {value}; the escape will be removed before passing them on to Awk.
+Each individual {var}={value} pair must be preceeded by `-v`.
 
 `-infile` and `-inbuf` are mutually exclusive and specify the input file or
-input buffer to use. If a file is chosen no input buffer will be opened. If
+input buffer ID to use. If a file is chosen no input buffer will be opened. If
 none are specified then a new 'buftype'="nofile" input buffer will be created.
 
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
+
+Run~
+Same as calling |AwkWardRun()| with the current buffer as argument.
+
+Stop~
+Same as calling |AwkWardStop()| with the current buffer as argument.
 
 
 
