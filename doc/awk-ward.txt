@@ -105,13 +105,14 @@ FUNCTIONS                                                 *awk-ward-functions*
 awk_ward#setup({b}, {args})                                 *awk_ward#setup()*
 
 Set up Awk-ward with the settings {args} for buffer handle {b}. {args} is a
-list whose contents are the same as the arguments accepted by |:AwkWard|.
+list whose contents are the same as the arguments accepted by |:AwkWard|. It
+is an error to set up Awk-ward if it is already set up.
 
 
 ------------------------------------------------------------------------------
 awk_ward#run({b})                                             *awk_ward#run()*
 
-Run Awk-ward on the buffer {b}. It is an error to run AwkWard if it has not
+Run Awk-ward on the buffer {b}. It is an error to run Awk-ward if it has not
 yet been set up.
 
 

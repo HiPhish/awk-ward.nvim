@@ -25,6 +25,14 @@
 "  Takes the same arguments as the command, but as a list.
 " ----------------------------------------------------------------------------
 function! awk_ward#setup(prog, args) abort
+	try
+		let l:awk_ward = nvim_buf_get_var(a:prog, 'awk_ward')
+	catch
+	endtry
+	if exists('l:awk_ward')
+		throw 'Awk-ward already set up for buffer '.a:prog
+	endif
+
 	let l:kwargs = {'vars': []}
 	" Process arguments
 	let l:i = 0
