@@ -48,14 +48,17 @@ Once you exit insert-mode the output buffer will show the Awk output
    123 Doe John
 
 Note that you did not have to save the input buffer, the output gets updated
-live. The output also updates live when you edit the program buffer.
+live. The output also updates live when you edit the program buffer. Suppose
+now that we want to change our input from a buffer to a file. We can execute
+the command again with our new settings: `:AwkWard -infile data.txt`. The input
+buffer will be closed and the output will show the result from processing the
+file `data.txt`.
 
 
 Status of the project
 #####################
 
-Awk-ward is ready for use with some rough corners, see the TODO_ file for
-details.
+Awk-ward is ready for use. Keep an eye on the TODO_ file for new ideas.
 
 .. _TODO: TODO.rst
 

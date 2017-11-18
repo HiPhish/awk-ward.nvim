@@ -24,13 +24,13 @@
 "
 "  Takes the same arguments as the command, but as a list.
 " ----------------------------------------------------------------------------
-function! awk_ward#setup(prog, args) abort
+function! awk_ward#setup(buf, args) abort
 	try
-		let l:awk_ward = nvim_buf_get_var(a:prog, 'awk_ward')
+		let l:awk_ward = nvim_buf_get_var(a:buf, 'awk_ward')
 	catch
 	endtry
 	if exists('l:awk_ward')
-		throw 'Awk-ward already set up for buffer '.a:prog
+		throw 'Awk-ward already set up for buffer '.a:buf
 	endif
 
 	let l:kwargs = {'vars': []}
@@ -62,7 +62,7 @@ function! awk_ward#setup(prog, args) abort
 		endif
 		let l:i += 1
 	endwhile
-	call s:prepare_awkward(a:prog, l:kwargs)
+	call s:prepare_awkward(a:buf, l:kwargs)
 endfunction
 
 
