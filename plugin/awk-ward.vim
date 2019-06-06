@@ -27,10 +27,11 @@ let g:awk_ward_nvim = v:true
 
 " ----------------------------------------------------------------------------
 "  Keyword arguments:
-"    -F        Record seperator
+"    -F        Field seperator
 "    -v        var=value pairs (use \= to escape a =)
 "    -inbuf    Buffer handle of the input buffer
 "    -infile   File name of input file
+"    -outbuf   Buffer to write output to
 " ----------------------------------------------------------------------------
 command! -nargs=* -complete=customlist,s:complete_awk AwkWard :call s:awk_ward(<f-args>)
 
@@ -41,24 +42,48 @@ command! -nargs=* -complete=customlist,s:complete_awk AwkWard :call s:awk_ward(<
 function! s:awk_ward(...)
 	let l:curbuf = nvim_get_current_buf()
 
-	if a:0 >= 1 && a:000[0] ==# 'setup'
-		call awk_ward#setup(l:curbuf, a:000[1 :])
+	if (a:0 >= 1 && a:000[0] ==# 'setup')
+		try
+			call awk_ward#setup(l:curbuf, s:parse_setup_args(a:000[1:]))
+		catch /AwkAlreadySetUp/
+		endtry
 		return
-	elseif a:0 == 1 && a:000[0] ==# 'run'
-		call awk_ward#run(l:curbuf)
+	elseif (a:0 == 1 && a:000[0] ==# 'run')
+		try
+			let l:awk_ward = nvim_buf_get_var(l:curbuf, 'awk_ward')
+		catch /\v^Vim\(call\):Key not found: awk_ward$/
+			echoerr 'Awk-ward: not yet set up for buffer' l:curbuf
+			return
+		endtry
+		call awk_ward#run(l:awk_ward)
+		" nvim_buf_get_var returns a copy of the variable, not a reference
+		call nvim_buf_set_var(l:curbuf, 'awk_ward', l:awk_ward)
 		return
-	elseif a:0 == 1 && a:000[0] ==# 'stop'
-		call awk_ward#stop(l:curbuf)
+	elseif (a:0 == 1 && a:000[0] ==# 'stop')
+		try
+			call awk_ward#stop(nvim_buf_get_var(l:curbuf, 'awk_ward'))
+		catch /\v^Vim\(call\):Key not found: awk_ward$/
+			echoerr 'Awk-ward: not yet set up for buffer' l:curbuf
+			return
+		endtry
 		return
 	endif
 
-	" Default behaviour: restart Awk-ward if arguments were provided, just
-	" re-run if no args were provided.
-	if a:0 > 0
-		try | call awk_ward#stop(l:curbuf) | catch | endtry
-	endif
-	try | call awk_ward#setup(l:curbuf, a:000) | catch | endtry
-	call awk_ward#run(l:curbuf)
+	" Default behaviour: If already set up, then run (no arguments provided)
+	" or stop, set up and then run (arguments provided). Otherwise set up and
+	" run.
+	try
+		let l:awk_ward = nvim_buf_get_var(l:curbuf, 'awk_ward')
+		if a:0 > 0
+			call awk_ward#stop(l:awk_ward)
+			let l:awk_ward = awk_ward#setup(l:curbuf, s:parse_setup_args(a:000))
+			call awk_ward#run(l:awk_ward)
+		endif
+		call awk_ward#run(l:awk_ward)
+	catch /\v^Vim\(let\):Key not found: awk_ward$/
+		let l:awk_ward = awk_ward#setup(l:curbuf, s:parse_setup_args(a:000))
+		call awk_ward#run(l:awk_ward)
+	endtry
 endfunction
 
 
@@ -87,7 +112,7 @@ function! s:complete_awk(ArgLead, CmdLine, CursorPos)
 		return ['-F', '-v', '-inbuf', '-infile']
 	endif
 
-	" Fall back on default behaviour, same as ':AwkWad setup'
+	" Fall back on default behaviour, same as ':AwkWard setup'
 	let l:args = l:args[1 :]
 	if l:args[0] ==# 'setup'
 		let l:args = l:args[1 :]
@@ -105,4 +130,42 @@ function! s:complete_awk(ArgLead, CmdLine, CursorPos)
 	endif
 
 	return l:comps
+endfunction
+
+
+" -----------------------------------------------------------------------------
+"  Parse command-line options for setup into a dictionary
+" -----------------------------------------------------------------------------
+function! s:parse_setup_args(args)
+	" The 'vars' entry is the variables to be defined 
+	let l:kwargs = {'vars': []}  "accumulate arguments here
+	let l:i = 0
+	while l:i < len(a:args)
+		let l:arg = a:args[l:i]
+		if l:arg ==# '-F'
+			let l:i += 1
+			let l:kwargs['fs'] = a:args[l:i]
+		elseif l:arg ==# '-v'
+			let l:i += 1
+			" Split on =, but not on \= (that's an escaped =)
+			let [l:var, l:val] = split(a:args[l:i], '\v[^\\]\zs\=')
+			" Substitute \= with = (to un-escape the =)
+			let l:var = substitute(l:var, '\v\\\=', '=', 'g')
+			let l:val = substitute(l:val, '\v\\\=', '=', 'g')
+			call add(l:kwargs['vars'], [l:var, l:val])
+		elseif l:arg ==# '-inbuf'
+			let l:i += 1
+			let l:kwargs['inbuf'] = a:args[l:i]
+		elseif l:arg ==# '-infile'
+			let l:i += 1
+			let l:kwargs['infile'] = a:args[l:i]
+		elseif l:arg ==# '-outbuf'
+			let l:i += 1
+			let l:kwargs['outbuf'] = a:args[l:i]
+		else
+			throw 'AwkWardUnknownOption' . l:arg
+		endif
+		let l:i += 1
+	endwhile
+	return l:kwargs
 endfunction

@@ -19,26 +19,26 @@ inside the `b:awk_ward` dictionary. Its entries are as follows:
 =========  ===================================================================
 Key        Value
 =========  ===================================================================
-callback   Lambda to call when running Awk-ward
-out        Buffer ID of the output buffer
-infile     File name (relative path) to input file
+progbuf    Buffer ID containing the program
+progfile   File path (relative) to temporary file to write the program to
+outbuf     Buffer ID of the output buffer
+infile     File path (relative) to input (possibly temporary) file
 inbuf      Buffer ID of the input buffer
-wipe_in    Whether to wipe the input buffer when stopping Awk-ward
+command    Shell command (as a list) to launch Awk
+job        Job ID of the running Awk process
 =========  ===================================================================
 
-The `infile` and `inbuf` entries should be merged into one entry `in` where we
-use the type (number of string) to differentiate between a file name or a
-Buffer ID.
-
-The `b:awk_ward` dictionary does not need to carry any Awk arguments, those are
-baked into the callback lambda already.
+The `inbuf` is optional. If it exists, then `infile` the path to a temporary
+file where to input will be copied to. The `b:awk_ward` dictionary does not
+need to carry any Awk arguments, those are baked into the `command` entry
+already.
 
 
 Things to investigate
 #####################
 
-When running Awk the content of the program buffer gets written to a temporary
-file first. Maybe this isn't necessary. If we can send the program as a
-command-line argument to Awk it might also improve performance to not have to
-do file I/O. On the other hand, sending large programs as arguments might
-worsen performance.
+When running Awk the contents of the program buffer and input buffer get
+written to a temporary file first. Maybe this isn't necessary. If we can send
+the program as a command-line argument to Awk it might also improve performance
+to not have to do file I/O. On the other hand, sending large programs as
+arguments might worsen performance.
