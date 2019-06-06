@@ -30,6 +30,11 @@ two separate inputs: the program and the text to transform. Awk-ward makes it
 easy to edit and preview your Awk scripts live by spawning an Awk process and
 writing the result to an output buffer.
 
+In the context of Awk-ward a "program" is the Awk script you wish to run, an
+"input" is the data you want the script to run on, and the "output" is the
+transformed data. The program is always read from a buffer, and the output is
+written to a buffer. The input can come either from a buffer or from a file.
+
  
 
 ==============================================================================
@@ -37,20 +42,17 @@ SETUP AND CONFIGURATION                                       *awk-ward-setup*
 
 You first need a standalone implementation of Awk installed on your system. A
 Unix system should come with the `awk` command already set up. If you wish to
-specify your own Awk implementation you can set the value of the |g:awkprg| or
-|b:awkprg| variable to the path of the binary.
+specify your own Awk implementation you can set the value of the |g:awkprg|,
+|t:awkprg| or |b:awkprg| variable to the path of the binary.
 
 
 ------------------------------------------------------------------------------
 g:awkprg  (default "awk")                                           *g:awkprg*
-
-Global setting for the path to the Awk binary. See also |b:awkprg|.
-
-
-------------------------------------------------------------------------------
 b:awkprg                                                            *b:awkprg*
+t:awkprg                                                            *t:awkprg*
 
-Similar to |g:awkprg|, but local to a specific buffer.
+Global, tab-local and buffer-local setting for the path to the Awk binary in
+ascending order or precedence.
 
 
 
@@ -79,47 +81,67 @@ setup~
 Same as calling |awk_ward#setup()| with the current buffer as first argument
 and the remaining arguments supplied as a list.
 
-The option `-F` options passes {fs} as the record seperator to Awk.
+The option `-F` options passes {fs} as the field separator to Awk.
 
-The `-v` option passes {value} as the {var} to Awk. There can be mutliple such
-pairs given and they will all get passed to Awk. Use `\=` to escape `=` in
-{var} and {value}; the escape will be removed before passing them on to Awk.
-Each individual {var}={value} pair must be preceeded by `-v`.
+The `-v` option passes {value} as the variable {var} to Awk. There can be
+multiple such pairs given and they will all get passed to Awk. Use `\=` to
+escape `=` in {var} and {value}; the escape will be removed before passing
+them on to Awk.  Each individual {var}={value} pair must be preceded by `-v`.
 
-`-infile` and `-inbuf` are mutually exclusive and specify the input file or
-input buffer ID to use. If a file is chosen no input buffer will be opened. If
-none are specified then a new 'buftype'="nofile" input buffer will be created.
+The options `-infile` and `-inbuf` are mutually exclusive and specify the
+input file or input buffer ID to use. If a file is chosen no input buffer will
+be opened. If none are specified then a new 'buftype'="nofile" input buffer
+will be created.
 
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 
 run~
-Same as calling |awk_ward#run()| with the current buffer as argument.
+Same as calling |awk_ward#run()| with the Awk-ward settings (|b:awk_ward|) of
+the current buffer as the argument.
 
 stop~
-Same as calling |awk_ward#stop()| with the current buffer as argument.
+Same as calling |awk_ward#stop()| with the Awk-ward settings (|b:awk_ward|) of
+the current buffer as the argument.
 
 
 
 ==============================================================================
 FUNCTIONS                                                 *awk-ward-functions*
 
-------------------------------------------------------------------------------
-awk_ward#setup({b}, {args})                                 *awk_ward#setup()*
-
-Set up Awk-ward with the settings {args} for buffer handle {b}. {args} is a
-list whose contents are the same as the arguments accepted by |:AwkWard|. It
-is an error to set up Awk-ward if it is already set up.
+Functions offer a less convenient, but more direct access to Awk-ward.
 
 
 ------------------------------------------------------------------------------
-awk_ward#run({b})                                             *awk_ward#run()*
+awk_ward#setup({progbuf}, {awk_options})                    *awk_ward#setup()*
+
+Set up Awk-ward with the settings {awk_options} for program buffer handle
+{progbuf}. The argument {awk_options} is a dictionary whose contents are
+similar to the arguments accepted by |:AwkWard|. It is an error to set up
+Awk-ward if it is already set up, you have to stop Awk-ward first (see
+|:AwkWard| and |awk_ward#stop()|).
+
+The following keys are supported for {awk_options}:
+
+- `outbuf`   Buffer to display output in
+- `infile`   File to read input from (conflicts with `inbuf`)
+- `inbuf`    Buffer to read input from (conflicts with `infile`)
+- `fs`       Field separator for use with Awk
+- `vars`     List of `[key, value]` pairs to use a variables in Awk
+
+If `outbuf` is no specified a new buffer will be created. The options `infile`
+and `inbuf` are mutually exclusive. If neither is specified a new input buffer
+will be created.
+
+
+------------------------------------------------------------------------------
+awk_ward#run({awk_ward})                                      *awk_ward#run()*
 
 Run Awk-ward on the buffer {b}. It is an error to run Awk-ward if it has not
 yet been set up.
 
 
 ------------------------------------------------------------------------------
-awk_ward#stop({b})                                           *awk_ward#stop()*
+awk_ward#stop({awk_ward})                                    *awk_ward#stop()*
 
 Perform the following on the Awk-ward setup of buffer {b}:
 

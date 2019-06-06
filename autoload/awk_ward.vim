@@ -22,80 +22,132 @@
 " ----------------------------------------------------------------------------
 "  Set up Awk-ward
 "
-"  Takes the same arguments as the command, but as a list.
+" Associate an Awk buffer with Awk-ward settings. After Awk-ward has been set
+" up for the buffer we can run it.
 " ----------------------------------------------------------------------------
-function! awk_ward#setup(buf, args) abort
+function! awk_ward#setup(progbuf, awk_options) abort
+	" TODO: should it be possible to re-setup Awk-ward?
 	try
-		let l:awk_ward = nvim_buf_get_var(a:buf, 'awk_ward')
+		let l:awk_ward = nvim_buf_get_var(a:progbuf, 'awk_ward')
 	catch
 	endtry
 	if exists('l:awk_ward')
-		throw 'Awk-ward already set up for buffer '.a:buf
+		echoerr 'Awk-ward: already set up for buffer' a:progbuf
+		throw 'AkwWardAlreadySetUp'
 	endif
 
-	let l:kwargs = {'vars': []}
-	" Process arguments
-	let l:i = 0
-	while l:i < len(a:args)
-		let l:arg = a:args[l:i]
-		if l:arg ==# '-F'
-			let l:i += 1
-			let l:kwargs['fs'] = a:args[l:i]
-		elseif l:arg ==# '-v'
-			let l:i += 1
-			" Split on =, but not on \= (that's an escaped =)
-			let [l:var, l:val] = split(a:args[l:i], '\v[^\\]\zs\=')
-			" Substitute \= with = (to un-escape the =)
-			let l:var = substitute(l:var, '\v\\\=', '=', 'g')
-			let l:val = substitute(l:val, '\v\\\=', '=', 'g')
+	let l:awk_ward = {}
 
-			call add(l:kwargs.var, [l:var, l:val])
-			let l:kwargs['fs'] = a:args[l:i]
-		elseif l:arg ==# '-inbuf'
-			let l:i += 1
-			let l:kwargs['inbuf'] = a:args[l:i]
-		elseif l:arg ==# '-infile'
-			let l:i += 1
-			let l:kwargs['infile'] = a:args[l:i]
-		else
-			throw 'Awk-ward: unknown option ' . l:arg
+	" Determine the Awk implementation
+	let l:command = ['awk']
+	for l:scope in ['b', 't', 'g']
+		execute 'if exists("'.l:scope.':awkprg") | let l:command[0] = '.l:scope.':awkprg | endif'
+	endfor
+
+	" The buffer from which the program will be read
+	let l:awk_ward['progbuf'] = a:progbuf
+
+	" A temporary file which will store the program code
+	let l:awk_ward['progfile'] = tempname()
+
+	" Output buffer
+	if has_key(a:awk_options, 'outbuf')
+		let l:awk_ward['outbuf'] = a:awk_options['outbuf']
+	else
+		" Create a new buffer for output
+		let l:current_win = nvim_get_current_win()
+		new  | " Create a new buffer
+		let l:outbuf = nvim_get_current_buf()
+		let l:awk_ward['outbuf'] = l:outbuf
+		call nvim_buf_set_option(l:outbuf, 'buftype', 'nofile')
+		call nvim_buf_set_option(l:outbuf, 'modifiable', v:false)
+		call nvim_buf_set_name(l:outbuf, 'Awk-ward output('.a:progbuf.')')
+		call nvim_set_current_win(l:current_win)
+	endif
+
+	" Use input file or input buffer
+	if has_key(a:awk_options, 'infile')
+		let l:awk_ward['infile'] = a:awk_options['infile']
+	elseif has_key(a:awk_options, 'inbuf')
+		let l:awk_ward['inbuf'] = a:awk_options['inbuf']
+		let l:awk_ward['infile'] = tempname()
+	else
+		let l:current_win = nvim_get_current_win()
+		new  | "Create a new buffer
+		let l:awk_ward['inbuf'] = nvim_get_current_buf()
+		let l:awk_ward['infile'] = tempname()
+		" Set input-buffer options
+		call nvim_buf_set_option(l:awk_ward['inbuf'], 'buftype', 'nofile')
+		call nvim_buf_set_option(l:awk_ward['inbuf'], 'modifiable', v:true)
+		call nvim_buf_set_name  (l:awk_ward['inbuf'], 'Awk-ward input('.a:progbuf.')')
+		call nvim_set_current_win(l:current_win)
+	endif
+
+	" Build up the Awk command
+	if has_key(a:awk_options, 'fs')
+		call extend(l:command, ['-F'], a:awk_options['fs']))
+	endif
+	if has_key(a:awk_options,'vars')
+		for [l:var, l:val] in a:awk_options['vars']
+			call add(l:command, ['-v', l:val.'='.l:var])
+		endfor
+	endif
+	call extend(l:command, ['-f', l:awk_ward['progfile']])
+	if has_key(l:awk_ward, 'infile')
+		call extend(l:command, ['--', l:awk_ward['infile']])
+	endif
+	let l:awk_ward['command'] = l:command
+
+	call nvim_buf_set_var(a:progbuf, 'awk_ward', l:awk_ward)
+
+	" Set up the auto command for program- and input buffer
+	execute 'augroup awk_ward_'.a:progbuf
+		autocmd!
+		exe 'au TextChanged,InsertLeave <buffer='.a:progbuf.'> call awk_ward#run(nvim_buf_get_var('.a:progbuf.', "awk_ward"))'
+		if has_key(l:awk_ward, 'inbuf')
+			let l:inbuf = l:awk_ward['inbuf']
+			exe 'au TextChanged,InsertLeave <buffer='.l:inbuf.'> call awk_ward#run(nvim_buf_get_var('.a:progbuf.', "awk_ward"))' 
 		endif
-		let l:i += 1
-	endwhile
-	call s:prepare_awkward(a:buf, l:kwargs)
+	execute 'augroup END'
+
+	return l:awk_ward
 endfunction
 
 
 " ----------------------------------------------------------------------------
 "  Run Awk-ward on a buffer where it has already been set up
 " ----------------------------------------------------------------------------
-function! awk_ward#run(buf) abort
-	try
-		call getbufvar(a:buf, 'awk_ward')['callback']()
-	catch
-		throw 'Awk-ward: Awk-ward not set up for this buffer yet'
-	endtry
+function! awk_ward#run(awk_ward) abort
+	" Write the program and input to temporary files
+	call writefile(nvim_buf_get_lines(a:awk_ward['progbuf'], 0, -1, v:false), a:awk_ward['progfile'])
+	if has_key(a:awk_ward, 'inbuf')
+		call writefile(nvim_buf_get_lines(a:awk_ward['inbuf'], 0, -1, v:false), a:awk_ward['infile'])
+	endif
+
+	let l:opts = {
+		\ 'on_stdout': {id, data, evt -> s:on_stdout(a:awk_ward['outbuf'], id, data, evt)},
+		\ 'on_stderr': {id, data, evt -> s:on_stderr(a:awk_ward['outbuf'], id, data, evt)},
+		\  'stdin_buffered': v:true,
+		\ 'stdout_buffered': v:true,
+		\ 'stderr_buffered': v:true,
+		\ 'on_exit'  : {id, stat, evt -> remove(a:awk_ward, 'job')}
+	\ }
+
+	echom 'Running Awk as ' . join(a:awk_ward['command'])
+	let a:awk_ward['job'] = jobstart(a:awk_ward['command'], l:opts)
 endfunction
 
 
 " ----------------------------------------------------------------------------
 "  Stop Awk-Ward from running
 "
-"  Wipes the input- and output buffers and deletes all Awk-ward settings.
+" Wipes the input- and output buffers and deletes all Awk-ward settings.
 " ----------------------------------------------------------------------------
-function! awk_ward#stop(buf) abort
-	try
-		let l:awk_ward = nvim_buf_get_var(a:buf, 'awk_ward')
-	catch
-		throw 'Cannot stop Awk-ward in buffer where it as never started'
-	endtry
-
-	execute 'autocmd! awk_ward_'.a:buf
-	execute 'bwipeout' l:awk_ward['out']
-	if get(l:awk_ward, 'wipe_in', v:false)
-		execute 'bwipeout' l:awk_ward['inbuf']
-	endif
-	call nvim_buf_del_var(a:buf, 'awk_ward')
+function! awk_ward#stop(awk_ward) abort
+	execute 'autocmd! awk_ward_'.a:awk_ward['progbuf']
+	execute 'bwipeout' a:awk_ward['outbuf']
+	let l:progbuf = a:awk_ward['progbuf']
+	call nvim_buf_del_var(l:progbuf, 'awk_ward')
 endfunction
 
 
@@ -103,153 +155,24 @@ endfunction
 " ===[ PRIVATE FUNCTIONS ]====================================================
 
 " ----------------------------------------------------------------------------
-"  Prepare buffers and windows for calling Awk
-"
-"  Arguments are passed as a keyword-dictionary, some keywords are optional.
-"
-"    - prog      Buffer to read the program from
-"    - fs        Record seperator
-"    - inbuf     Input buffer to read data from
-"    - infile    Input file to read data from
-"    - vars      List of [var, val] pairs
-"
-"  Needs the -F option.
-" ----------------------------------------------------------------------------
-function! s:prepare_awkward(prog, kwargs) abort
-	" Build the Awk-ward settings dictionary
-	"   callback  Function to call to run Awk-ward
-	"   out       Buffer handle for output
-	"   infile    File name of input (conflicts with inbuf)
-	"   inbuf     Buffer handle of input (conflicts with infile)
-	"   wipe_in   Whether to wipe the input buffer (only if inbuf exists)
-	let l:awk_ward = {}
-	let l:progwin = nvim_get_current_win()
-
-	" This will hold the Awk command and its arguments
-	if exists('b:awkprg')
-		let l:awk_cmd = [b:awkprg]
-	elseif exists('g:awkprg') 
-		let l:awk_cmd = [g:awkprg]
-	else
-		let l:awk_cmd = [ 'awk']
-	endif
-
-	" Process option: Record seperator
-	if has_key(a:kwargs, 'fs')
-		let l:awk_cmd = extend(l:awk_cmd, ['-F', a:kwargs.fs])
-	endif
-
-	" Process option: Append variable definitions
-	if has_key(a:kwargs, 'vars')
-		for [l:var, l:val] in a:kwargs.vars
-			call add(l:awk_cmd, ['-v', l:val.'='.l:var])
-		endfor
-	endif
-
-	" Process option: Append the program file
-	let a:kwargs['progfile'] = tempname()
-	call extend(l:awk_cmd, ['-f', a:kwargs.progfile])
-
-	" Create the output buffer and set its options
-	new
-	let l:outbuf = nvim_get_current_buf()
-	let l:awk_ward['out'] = l:outbuf
-	call nvim_buf_set_option(l:outbuf, 'buftype', 'nofile')
-	call nvim_buf_set_option(l:outbuf, 'modifiable', v:false)
-	call nvim_buf_set_name(l:outbuf, 'Awk-ward output('.a:prog.')')
-
-	" Use input file or input buffer
-	if has_key(a:kwargs, 'infile')
-		let l:awk_ward['infile'] = a:kwargs.infile
-		call add(l:awk_cmd, a:kwargs.infile)
-	elseif has_key(a:kwargs, 'inbuf')
-		let l:awk_ward['inbuf'] = a:kwargs.inbuf
-		let l:awk_ward['wipe_in'] = v:false
-		call add(l:awk_cmd, '-')
-	else
-		let l:awk_ward['wipe_in'] = v:true
-		call add(l:awk_cmd, '-')
-		new  | "Create a new buffer
-		let a:kwargs.inbuf = nvim_get_current_buf()
-		let l:awk_ward['inbuf'] = a:kwargs.inbuf
-		" Set input-buffer options
-		call nvim_buf_set_option(a:kwargs.inbuf, 'buftype', 'nofile')
-		call nvim_buf_set_option(a:kwargs.inbuf, 'modifiable', v:true)
-		call nvim_buf_set_name(a:kwargs.inbuf, 'Awk-ward input('.a:prog.')')
-	endif
-
-	" Build a function to be called when Awk is invoked on the program buffer
-	let l:progfile = a:kwargs.progfile
-	let l:in = has_key(a:kwargs, 'infile') ? a:kwargs.infile : a:kwargs.inbuf
-	let l:awk_ward['callback'] = {-> s:awk_ward(l:awk_cmd, a:prog, l:progfile, l:in, l:outbuf)}
-	call nvim_set_current_win(l:progwin)
-
-	" Set up the auto command for program- and input buffer
-	execute 'augroup awk_ward_'.a:prog 
-		autocmd!
-		exe 'au TextChanged,InsertLeave <buffer='.a:prog.'> call awk_ward#run('.a:prog.')'
-		if has_key(a:kwargs, 'inbuf')
-			exe 'au TextChanged,InsertLeave <buffer='.a:kwargs['inbuf'].'> call awk_ward#run('.a:prog.')'
-		endif
-	execute 'augroup END'
-
-	let b:awk_ward = l:awk_ward
-	call b:awk_ward['callback']()
-endfunction
-
-
-" ----------------------------------------------------------------------------
-"  Run the Awk binary (use this to build a callback)
-"
-"    a:prog  Buffer of the program to execute
-"    a:in    Buffer or file to operate on
-"    a:out   Buffer to write output to 
-" ----------------------------------------------------------------------------
-function! s:awk_ward(cmd, progbuf, progfile, in, out) abort
-	" Write the program to a temporary file
-	call writefile(nvim_buf_get_lines(a:progbuf, 0, -1, v:false), a:progfile)
-
-	" Delete the output buffer contents
-	call s:set_buf_contents(a:out, 0, -1, [])
-	call nvim_buf_set_var(a:out, 'awk_ward_blank', v:true)
-
-	let l:opts = {
-		\ 'on_stdout': {id, data, evt -> s:on_stdout(a:out, id, data, evt)},
-		\ 'on_stderr': {id, data, evt -> s:on_stderr(a:out, id, data, evt)},
-		\ 'on_exit'  : {id, stat, evt -> v:true}
-	\ }
-
-	let l:awkjob = jobstart(a:cmd, l:opts)
-	if type(a:in) == type(0)
-		call jobsend(l:awkjob, nvim_buf_get_lines(a:in, 0, -1, v:false))
-		call jobclose(l:awkjob, 'stdin')
-	endif
-endfunction
-
-" ----------------------------------------------------------------------------
 "  Handle the standard output of an Awk process.
 " ----------------------------------------------------------------------------
 function! s:on_stdout(out, id, data, evt) abort
-	let l:from = nvim_buf_get_var(a:out, 'awk_ward_blank') ? 0 : -1
-	call s:set_buf_contents(a:out, l:from, -1, a:data)
+	if a:data == ['']
+		return
+	endif
+	call nvim_buf_set_option(a:out, 'modifiable', v:true)
+	call nvim_buf_set_lines(a:out, 0, -1, v:false, [])
+	call nvim_buf_set_lines(a:out, 0, -1, v:false, a:data)
+	call nvim_buf_set_option(a:out, 'modifiable', v:false)
 endfunction
 
 " ----------------------------------------------------------------------------
 "  Handle the standard error of an Awk process.
 " ----------------------------------------------------------------------------
 function! s:on_stderr(out, id, data, evt) abort
-	echom 'Awk error:'.join(a:data)
+	if a:data == ['']
+		return
+	endif
+	echoerr 'Awk-ward: '.join(a:data)
 endfunction
-
-" ----------------------------------------------------------------------------
-"  Set the contents of a non-modifiable buffer
-" ----------------------------------------------------------------------------
-function! s:set_buf_contents(buf, from, to, lines) abort
-	" Make the buffer temporarily modifiable in order to write the output,
-	" then lock it again and mark it as not modified.
-	call nvim_buf_set_option(a:buf, 'modifiable', v:true)
-	call nvim_buf_set_lines(a:buf, a:from, a:to, v:false, a:lines)
-	call nvim_buf_set_option(a:buf, 'modifiable', v:false)
-	call nvim_buf_set_option(a:buf, 'modified', v:false)
-endfunction
-
