@@ -20,7 +20,7 @@
 
 function! health#awk_ward#check() abort
 	call health#report_start('awk_ward')
-	let l:awkprg = exists('g:awkprg') ? g:awkprg : 'awk'
+	let l:awkprg = get(g:, 'awkprg', 'awk')
 	if executable(l:awkprg)
 		call health#report_ok('Awk binary "'.l:awkprg.'" found')
 	else
