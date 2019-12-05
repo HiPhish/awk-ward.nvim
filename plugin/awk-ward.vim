@@ -41,7 +41,9 @@ command! -nargs=* -complete=customlist,s:complete_awk AwkWard :call s:awk_ward(<
 " ----------------------------------------------------------------------------
 function! s:awk_ward(...)
 	let l:curbuf = nvim_get_current_buf()
+	let l:awk_ward = getbufvar(l:curbuf, 'awk_ward', {})
 
+	" If an argument is provided check whether it is one of the following
 	if (a:0 >= 1 && a:000[0] ==# 'setup')
 		try
 			call awk_ward#setup(l:curbuf, s:parse_setup_args(a:000[1:]))
@@ -49,41 +51,35 @@ function! s:awk_ward(...)
 		endtry
 		return
 	elseif (a:0 == 1 && a:000[0] ==# 'run')
-		try
-			let l:awk_ward = nvim_buf_get_var(l:curbuf, 'awk_ward')
-		catch /\vKey not found: awk_ward$/
+		if empty(l:awk_ward)
 			echoerr 'Awk-ward: not yet set up for buffer' l:curbuf
 			return
-		endtry
+		endif
 		call awk_ward#run(l:awk_ward)
-		" nvim_buf_get_var returns a copy of the variable, not a reference
-		call nvim_buf_set_var(l:curbuf, 'awk_ward', l:awk_ward)
 		return
 	elseif (a:0 == 1 && a:000[0] ==# 'stop')
-		try
-			call awk_ward#stop(nvim_buf_get_var(l:curbuf, 'awk_ward'))
-		catch /\vKey not found: awk_ward$/
+		if empty(l:awk_ward)
 			echoerr 'Awk-ward: not yet set up for buffer' l:curbuf
 			return
-		endtry
+		endif
+		call awk_ward#stop(l:awk_ward)
 		return
 	endif
 
 	" Default behaviour: If already set up, then run (no arguments provided)
 	" or stop, set up and then run (arguments provided). Otherwise set up and
 	" run.
-	try
-		let l:awk_ward = nvim_buf_get_var(l:curbuf, 'awk_ward')
+	if empty(l:awk_ward)
+		let l:awk_ward = awk_ward#setup(l:curbuf, s:parse_setup_args(a:000))
+		call awk_ward#run(l:awk_ward)
+	else
 		if a:0 > 0
 			call awk_ward#stop(l:awk_ward)
 			let l:awk_ward = awk_ward#setup(l:curbuf, s:parse_setup_args(a:000))
 			call awk_ward#run(l:awk_ward)
 		endif
 		call awk_ward#run(l:awk_ward)
-	catch /\vKey not found\: awk_ward$/
-		let l:awk_ward = awk_ward#setup(l:curbuf, s:parse_setup_args(a:000))
-		call awk_ward#run(l:awk_ward)
-	endtry
+	endif
 endfunction
 
 
