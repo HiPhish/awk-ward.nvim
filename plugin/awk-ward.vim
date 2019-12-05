@@ -27,7 +27,7 @@ let g:awk_ward_nvim = v:true
 
 " ----------------------------------------------------------------------------
 "  Keyword arguments:
-"    -F        Field seperator
+"    -F        Field separator
 "    -v        var=value pairs (use \= to escape a =)
 "    -inbuf    Buffer handle of the input buffer
 "    -infile   File name of input file
