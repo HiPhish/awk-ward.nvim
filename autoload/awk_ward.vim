@@ -27,21 +27,16 @@
 " ----------------------------------------------------------------------------
 function! awk_ward#setup(progbuf, awk_options) abort
 	" TODO: should it be possible to re-setup Awk-ward?
-	try
-		let l:awk_ward = nvim_buf_get_var(a:progbuf, 'awk_ward')
-	catch
-	endtry
-	if exists('l:awk_ward')
+	let l:awk_ward = getbufvar(a:progbuf, 'awk_ward', {})
+	if !empty(l:awk_ward)
 		echoerr 'Awk-ward: already set up for buffer' a:progbuf
 		throw 'AkwWardAlreadySetUp'
 	endif
 
-	let l:awk_ward = {}
-
 	" Determine the Awk implementation
 	let l:command = ['awk']
-	for l:scope in ['b', 't', 'g']
-		execute 'if exists("'.l:scope.':awkprg") | let l:command[0] = '.l:scope.':awkprg | endif'
+	for l:scope in [g:, t:, b:]
+		let l:command[0] = get(l:scope, 'awkprog', l:command[0])
 	endfor
 
 	" The buffer from which the program will be read
@@ -103,10 +98,10 @@ function! awk_ward#setup(progbuf, awk_options) abort
 	" Set up the auto command for program- and input buffer
 	execute 'augroup awk_ward_'.a:progbuf
 		autocmd!
-		exe 'au TextChanged,InsertLeave <buffer='.a:progbuf.'> call awk_ward#run(nvim_buf_get_var('.a:progbuf.', "awk_ward"))'
+		exe 'au TextChanged,InsertLeave <buffer='.a:progbuf.'> call awk_ward#run(getbufvar('.a:progbuf.', "awk_ward"))'
 		if has_key(l:awk_ward, 'inbuf')
 			let l:inbuf = l:awk_ward['inbuf']
-			exe 'au TextChanged,InsertLeave <buffer='.l:inbuf.'> call awk_ward#run(nvim_buf_get_var('.a:progbuf.', "awk_ward"))' 
+			exe 'au TextChanged,InsertLeave <buffer='.l:inbuf.'> call awk_ward#run(getbufvar('.a:progbuf.', "awk_ward"))'
 		endif
 	execute 'augroup END'
 
@@ -117,7 +112,13 @@ endfunction
 " ----------------------------------------------------------------------------
 "  Run Awk-ward on a buffer where it has already been set up
 " ----------------------------------------------------------------------------
-function! awk_ward#run(awk_ward) abort
+function! awk_ward#run(awk_ward)
+	" If there is already an Awk job running terminate it first before starting
+	" a new one; this gets rid of stuck processes
+	if has_key(a:awk_ward, 'job')
+		call jobstop(a:awk_ward['job'])
+	endif
+
 	" Write the program and input to temporary files
 	call writefile(nvim_buf_get_lines(a:awk_ward['progbuf'], 0, -1, v:false), a:awk_ward['progfile'])
 	if has_key(a:awk_ward, 'inbuf')
@@ -130,10 +131,9 @@ function! awk_ward#run(awk_ward) abort
 		\  'stdin_buffered': v:true,
 		\ 'stdout_buffered': v:true,
 		\ 'stderr_buffered': v:true,
-		\ 'on_exit'  : {id, stat, evt -> remove(a:awk_ward, 'job')}
+		\ 'on_exit'  : {id, stat, evt -> s:on_exit(id, stat, evt, a:awk_ward)}
 	\ }
 
-	echom 'Running Awk as ' . join(a:awk_ward['command'])
 	let a:awk_ward['job'] = jobstart(a:awk_ward['command'], l:opts)
 endfunction
 
@@ -175,4 +175,17 @@ function! s:on_stderr(out, id, data, evt) abort
 		return
 	endif
 	echoerr 'Awk-ward: '.join(a:data)
+endfunction
+
+" -----------------------------------------------------------------------------
+"  Handle termination of an Awk process
+"
+" We pass the awk_ward dictionary as an additional argument so the job can be
+" removed. We cannot use this as a callback, we have to wrap it in a lambda
+" instead.
+" -----------------------------------------------------------------------------
+function! s:on_exit(id, stat, evt, awk_ward) abort
+	if get(a:awk_ward, 'job', -1) == a:id
+		call remove(a:awk_ward, 'job')
+	endif
 endfunction
