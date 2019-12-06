@@ -1,4 +1,4 @@
-*awk-ward.txt*   Run Awk programs in Neovim
+*awk-ward.txt*   Awk live programming in Neovim
                                                                *awk-ward.nvim*
                ___           __                                __~
               /   |_      __/ /__     _      ______ __________/ /~
@@ -79,7 +79,7 @@ The main commands are as follows:
 
 setup~
 Same as calling |awk_ward#setup()| with the current buffer as first argument
-and the remaining arguments supplied as a list.
+and the remaining arguments supplied as the options.
 
 The option `-F` options passes {fs} as the field separator to Awk.
 
@@ -128,7 +128,7 @@ The following keys are supported for {awk_options}:
 - `fs`       Field separator for use with Awk
 - `vars`     List of `[key, value]` pairs to use a variables in Awk
 
-If `outbuf` is no specified a new buffer will be created. The options `infile`
+If `outbuf` is not specified a new buffer will be created. The options `infile`
 and `inbuf` are mutually exclusive. If neither is specified a new input buffer
 will be created.
 
