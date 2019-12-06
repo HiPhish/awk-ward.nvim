@@ -5,23 +5,27 @@
 ########################
 
 
+Buffer names VS buffer handles
+##############################
+
+Should I be using buffer names or buffer handles for the input buffer (`-inbuf`
+option)? Not every buffer has a name, but on the other hand names are easier to
+work with and we can use `getcompletion` to get a nice list.
+
+
 Better command completion
 #########################
 
-The `:AwkWard` command currently only offers its options as suggestions, but it
-would be better if the suggestions were context-sensitive with regard to the
-preceding argument. 
+There is one flaw in the command completion. Take for example the following
+command line:
 
-=========  ====================================================================
-Argument   Suggestions
-=========  ====================================================================
-nothing    `setup`, `run`, `stop`, followed by the options
-`setup`    Options (`-F`, `-v`, `-infile`, `-inbuf`)
-`run`      Nothing
-`stop`     Nothing
-`-infile`  File name completion
-`-inbuf`   Buffer number or name completion
-`-v`       Nothing
-`-F`       Nothing
-else       Options
-=========  ====================================================================
+.. code-block:
+
+   :AwkWard setup -infile -infile
+
+Here the name of the input file is also `-infile`. When the user tries
+completing the next option the suggestions will not suggest the usual options
+(as they should), but suggest files names because the code thinks that that
+last `-infile` is a function argument. I cannot think of a solution, and in
+practice I don't expect anyone to actually have such file names.h, so I'll just
+leave it like this for now.
