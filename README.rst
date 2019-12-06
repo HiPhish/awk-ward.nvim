@@ -58,7 +58,8 @@ file `data.txt`.
 Status of the project
 #####################
 
-Awk-ward is ready for use. Keep an eye on the TODO_ file for new ideas.
+Awk-ward is feature-complete and ready for use. Keep an eye on the TODO_ file
+for new ideas.
 
 .. _TODO: TODO.rst
 

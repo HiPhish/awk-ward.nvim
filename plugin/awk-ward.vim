@@ -33,7 +33,7 @@ let g:awk_ward_nvim = v:true
 "    -infile   File name of input file
 "    -outbuf   Buffer to write output to
 " ----------------------------------------------------------------------------
-command! -nargs=* -complete=customlist,s:complete_awk AwkWard :call s:awk_ward(<f-args>)
+command! -nargs=* -complete=custom,s:complete AwkWard :call s:awk_ward(<f-args>)
 
 
 " ----------------------------------------------------------------------------
@@ -86,46 +86,32 @@ endfunction
 " ----------------------------------------------------------------------------
 "  Completion function
 " ----------------------------------------------------------------------------
-function! s:complete_awk(ArgLead, CmdLine, CursorPos)
-	let l:args = split(a:CmdLine, '\v[^\\]\zs ')
-	if len(l:args) == 1
-		if exists('b:awk_ward')
-			return ['run', 'stop']
-		else
-			return ['setup', '-F', '-v', '-prog', '-inbuf', '-infile']
+" This variable will be used for completion, but we define them outside the
+" function to avoid re-allocating them every time
+let s:options = "-F\n-v\n-inbuf\n-infile"
+
+function! s:complete(ArgLead, CmdLine, CursorPos)
+	let l:CmdLine  = split(a:CmdLine, '\v[^\\]\zs\s+')
+	let l:previous = l:CmdLine[empty(a:ArgLead) ? -1 : -2]
+
+	if len(l:CmdLine) == 1 || len(l:CmdLine) == 2 && l:previous ==# 'AwkWard'
+		if has_key(b:, 'awk_ward')
+			return "run\nstop"
 		endif
+		return "setup\n" .. s:options
+	elseif l:previous ==# 'setup'
+		return s:options
+	elseif l:previous ==# '-inbuf' && l:CmdLine[-2]
+		return ''
+	elseif l:previous ==# '-infile' && l:CmdLine[-2]
+		return join(getcompletion(a:ArgLead, 'file', v:true), "\n")
+	elseif index(['run', 'stop'], l:previous) + 1 && len(l:CmdLine) == 2
+		return ''
+	elseif index(['-v', '-F'], l:previous) + 1
+		return ''
 	endif
 
-	if len(l:args) == 2 && l:args[1] ==# 'run' && a:ArgLead !=# 'run'
-		return map(getcompletion('', 'buffer'), {_,v->string(bufnr(v))})
-	endif
-
-	if len(l:args) == 2 && l:args[1] ==# 'stop' && a:ArgLead !=# 'stop'
-		return map(getcompletion('', 'buffer'), {_,v->string(bufnr(v))})
-	endif
-
-	if len(l:args) == 2 && l:args[1] ==# 'setup' && a:ArgLead !=# 'setup'
-		return ['-F', '-v', '-inbuf', '-infile']
-	endif
-
-	" Fall back on default behaviour, same as ':AwkWard setup'
-	let l:args = l:args[1 :]
-	if l:args[0] ==# 'setup'
-		let l:args = l:args[1 :]
-	endif
-	let l:comps = []
-	if index(l:args, '-F') == -1
-		call add(l:comps, '-F')
-	endif
-	call add(l:comps, '-v')
-	if index(l:args, '-prog') == -1
-		call add(l:comps, '-prog')
-	endif
-	if index(l:args, '-inbuf') == -1 && index(l:args, '-infile') == -1
-		call extend(l:comps, ['-inbuf', '-infile'])
-	endif
-
-	return l:comps
+	return s:options
 endfunction
 
 
