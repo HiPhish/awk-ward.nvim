@@ -29,6 +29,7 @@ let g:awk_ward_nvim = v:true
 "  Keyword arguments:
 "    -F        Field separator
 "    -v        var=value pairs (use \= to escape a =)
+"    -input    Buffer name of the input buffer
 "    -inbuf    Buffer handle of the input buffer
 "    -infile   File name of input file
 "    -outbuf   Buffer to write output to
@@ -88,7 +89,7 @@ endfunction
 " ----------------------------------------------------------------------------
 " This variable will be used for completion, but we define them outside the
 " function to avoid re-allocating them every time
-let s:options = "-F\n-v\n-inbuf\n-infile"
+let s:options = "-F\n-v\n-input\n-inbuf\n-infile"
 
 function! s:complete(ArgLead, CmdLine, CursorPos)
 	let l:CmdLine  = split(a:CmdLine, '\v[^\\]\zs\s+')
@@ -101,9 +102,11 @@ function! s:complete(ArgLead, CmdLine, CursorPos)
 		return "setup\n" .. s:options
 	elseif l:previous ==# 'setup'
 		return s:options
-	elseif l:previous ==# '-inbuf' && l:CmdLine[-2]
+	elseif l:previous ==# '-input'
+		return join(getcompletion(a:ArgLead, 'buffer', v:true), "\n")
+	elseif l:previous ==# '-inbuf'
 		return ''
-	elseif l:previous ==# '-infile' && l:CmdLine[-2]
+	elseif l:previous ==# '-infile'
 		return join(getcompletion(a:ArgLead, 'file', v:true), "\n")
 	elseif index(['run', 'stop'], l:previous) + 1 && len(l:CmdLine) == 2
 		return ''
@@ -135,6 +138,9 @@ function! s:parse_setup_args(args)
 			let l:var = substitute(l:var, '\v\\\=', '=', 'g')
 			let l:val = substitute(l:val, '\v\\\=', '=', 'g')
 			call add(l:kwargs['vars'], [l:var, l:val])
+		elseif l:arg ==# '-input'
+			let l:i += 1
+			let l:kwargs['inbuf'] = bufnr(a:args[l:i])
 		elseif l:arg ==# '-inbuf'
 			let l:i += 1
 			let l:kwargs['inbuf'] = a:args[l:i]

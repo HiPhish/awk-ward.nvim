@@ -5,16 +5,18 @@
 ########################
 
 
-Buffer names VS buffer handles
-##############################
-
-Should I be using buffer names or buffer handles for the input buffer (`-inbuf`
-option)? Not every buffer has a name, but on the other hand names are easier to
-work with and we can use `getcompletion` to get a nice list.
-
-
 Better command completion
 #########################
+
+Buffer number list
+==================
+
+The `-inbuf` option should complete to buffer numbers; to this end I need a
+list of numbers like `:ls` produces them. `map(getbufinfo(), {b -> b.bufnr})`
+is no good though.
+
+Wrong suggestions
+=================
 
 There is one flaw in the command completion. Take for example the following
 command line:
