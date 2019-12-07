@@ -61,11 +61,15 @@ COMMANDS                                                   *awk-ward-commands*
 
 ------------------------------------------------------------------------------
                                                                     *:AwkWard*
-:AwkWard setup [-F {fs}] [-v {var}={value} ...] [-inbuf {b} | -infile {f}]
+:AwkWard setup [-F {fs}] [-v {var}={value} ...] [-input {b}] [-inbuf {b}]
+         [-infile {f}]
+
 :AwkWard run
+
 :AwkWard stop
 
-:AwkWard [-F {fs}] [-v {var}={value} ...] [-inbuf {b} | -infile {f}]
+:AwkWard [-F {fs}] [-v {var}={value} ...] [-input {b}] [-inbuf {b}]
+         [-infile {f}]
 
 The main command allows one to set up, run and stop Awk-ward in the current
 buffer. If none of the main commands are given a sensible default is chosen:
@@ -88,10 +92,10 @@ multiple such pairs given and they will all get passed to Awk. Use `\=` to
 escape `=` in {var} and {value}; the escape will be removed before passing
 them on to Awk.  Each individual {var}={value} pair must be preceded by `-v`.
 
-The options `-infile` and `-inbuf` are mutually exclusive and specify the
-input file or input buffer ID to use. If a file is chosen no input buffer will
-be opened. If none are specified then a new 'buftype'="nofile" input buffer
-will be created.
+The options `-input` (a buffer name), `-inbuf` (a buffer number) and `-infile`
+(a file name) are mutually exclusive and specify the input file or input
+buffer ID to use. If a file is chosen no input buffer will be opened. If none
+are specified then a new 'buftype'="nofile" input buffer will be created.
 
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 
@@ -123,8 +127,8 @@ Awk-ward if it is already set up, you have to stop Awk-ward first (see
 The following keys are supported for {awk_options}:
 
 - `outbuf`   Buffer to display output in
-- `infile`   File to read input from (conflicts with `inbuf`)
 - `inbuf`    Buffer to read input from (conflicts with `infile`)
+- `infile`   File to read input from (conflicts with `inbuf`)
 - `fs`       Field separator for use with Awk
 - `vars`     List of `[key, value]` pairs to use a variables in Awk
 
