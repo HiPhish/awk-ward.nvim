@@ -34,10 +34,7 @@ function! awk_ward#setup(progbuf, awk_options) abort
 	endif
 
 	" Determine the Awk implementation
-	let l:command = ['awk']
-	for l:scope in [g:, t:, b:]
-		let l:command[0] = get(l:scope, 'awkprog', l:command[0])
-	endfor
+	let l:command = [get(b:,'awkprg',get(t:,'awkprg',get(g:,'awkprg','awk')))]
 
 	" The buffer from which the program will be read
 	let l:awk_ward['progbuf'] = a:progbuf
