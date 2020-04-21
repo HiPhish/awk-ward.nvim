@@ -122,7 +122,7 @@ endfunction
 "  Parse command-line options for setup into a dictionary
 " -----------------------------------------------------------------------------
 function! s:parse_setup_args(args)
-	" The 'vars' entry is the variables to be defined 
+	" The 'vars' entry is the list of Awk variables to be defined 
 	let l:kwargs = {'vars': []}  "accumulate arguments here
 	let l:i = 0
 	while l:i < len(a:args)
@@ -143,15 +143,15 @@ function! s:parse_setup_args(args)
 			let l:kwargs['inbuf'] = bufnr(a:args[l:i])
 		elseif l:arg ==# '-inbuf'
 			let l:i += 1
-			let l:kwargs['inbuf'] = a:args[l:i]
+			let l:kwargs['inbuf'] = eval(a:args[l:i])
 		elseif l:arg ==# '-infile'
 			let l:i += 1
 			let l:kwargs['infile'] = a:args[l:i]
 		elseif l:arg ==# '-outbuf'
 			let l:i += 1
-			let l:kwargs['outbuf'] = a:args[l:i]
+			let l:kwargs['outbuf'] = eval(a:args[l:i])
 		else
-			throw 'AwkWardUnknownOption' . l:arg
+			throw 'AwkWardUnknownOption:' . l:arg
 		endif
 		let l:i += 1
 	endwhile
