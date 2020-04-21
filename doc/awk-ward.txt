@@ -1,4 +1,4 @@
-*awk-ward.txt*	For Neovim version 0.4	Last change: 2020-04-21
+*awk-ward.txt*	Live Awk programming for Neovim version 0.4+	Last change: 2020-04-21
 
                                                                *awk-ward.nvim*
                ___           __                                __~
@@ -7,7 +7,6 @@
             / ___ | |/ |/ / ,< /_____/ |/ |/ / /_/ / /  / /_/ /~
            /_/  |_|__/|__/_/|_|      |__/|__/\__,_/_/   \__,_/~
 
-                                               Live Awk programming in Neovim~
 
 Author: Alejandro "HiPhish" Sanchez
 License: MIT (Expat) License
@@ -60,11 +59,13 @@ specify your own Awk implementation you can set the value of the |g:awkprg|,
 ------------------------------------------------------------------------------
 g:awkprg  (default "awk")                                           *g:awkprg*
 t:awkprg                                                            *t:awkprg*
+l:awkprg                                                            *l:awkprg*
 b:awkprg                                                            *b:awkprg*
 
-Global, tab-local and buffer-local setting for the path to the Awk binary in
-increasing order or precedence. If a variable is not defined the next less
-relevant one is tried, until eventually falling back to the global default.
+Global, tab-local, window-local and buffer-local setting for the path to the
+Awk binary in increasing order or precedence. If a variable is not defined the
+next less relevant one is tried, until eventually falling back to the global
+default.
 
 
 
@@ -186,4 +187,3 @@ up for a buffer.
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:
-
