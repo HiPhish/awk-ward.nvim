@@ -1,4 +1,5 @@
-*awk-ward.txt*   Awk live programming in Neovim
+*awk-ward.txt*	For Neovim version 0.4	Last change: 2020-04-21
+
                                                                *awk-ward.nvim*
                ___           __                                __~
               /   |_      __/ /__     _      ______ __________/ /~
@@ -6,8 +7,18 @@
             / ___ | |/ |/ / ,< /_____/ |/ |/ / /_/ / /  / /_/ /~
            /_/  |_|__/|__/_/|_|      |__/|__/\__,_/_/   \__,_/~
 
+                                               Live Awk programming in Neovim~
+
 Author: Alejandro "HiPhish" Sanchez
-License: MIT License
+License: MIT (Expat) License
+
+Repository:
+    - https://gitlab.com/HiPhish/awk-ward.nvim
+    - https://github.com/HiPhish/awk-ward.nvim (mirror)
+
+Issue tracker:
+    - https://gitlab.com/HiPhish/awk-ward.nvim/-/issues (preferred)
+    - https://github.com/HiPhish/awk-ward.nvim/issues
 
 
 ==============================================================================
@@ -69,7 +80,7 @@ COMMANDS                                                   *awk-ward-commands*
 :AwkWard stop
 
 :AwkWard [-F {fs}] [-v {var}={value} ...] [-input {b}] [-inbuf {b}]
-         [-infile {f}]
+         [-infile {f}] [-output {b}] [-outbuf {b}]
 
 The main command allows one to set up, run and stop Awk-ward in the current
 buffer. If none of the main commands are given a sensible default is chosen:
@@ -96,6 +107,10 @@ The options `-input` (a buffer name), `-inbuf` (a buffer number) and `-infile`
 (a file name) are mutually exclusive and specify the input file or input
 buffer ID to use. If a file is chosen no input buffer will be opened. If none
 are specified then a new 'buftype'="nofile" input buffer will be created.
+
+The options `-output` (a buffer name) and `-outbuf` (a buffer number) are
+mutually exclusive and specify the buffer to use for output. If neither is
+specified a new 'buftype'="nofile" output buffer will be created
 
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 

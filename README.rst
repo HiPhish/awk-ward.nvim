@@ -67,6 +67,6 @@ for new ideas.
 License
 #######
 
-Released under the MIT license, see the COPYING_ file for details.
+Released under the MIT (Expat) license, see the COPYING_ file for details.
 
 .. _COPYING: COPYING.txt

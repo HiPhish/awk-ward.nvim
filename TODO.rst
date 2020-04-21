@@ -8,13 +8,6 @@
 Better command completion
 #########################
 
-Buffer number list
-==================
-
-The `-inbuf` option should complete to buffer numbers; to this end I need a
-list of numbers like `:ls` produces them. `map(getbufinfo(), {b -> b.bufnr})`
-is no good though.
-
 Wrong suggestions
 =================
 
@@ -29,5 +22,5 @@ Here the name of the input file is also `-infile`. When the user tries
 completing the next option the suggestions will not suggest the usual options
 (as they should), but suggest files names because the code thinks that that
 last `-infile` is a function argument. I cannot think of a solution, and in
-practice I don't expect anyone to actually have such file names.h, so I'll just
+practice I don't expect anyone to actually have such file names, so I'll just
 leave it like this for now.
