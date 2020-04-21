@@ -89,7 +89,7 @@ endfunction
 " ----------------------------------------------------------------------------
 " This variable will be used for completion, but we define them outside the
 " function to avoid re-allocating them every time
-let s:options = "-F\n-v\n-input\n-inbuf\n-infile"
+let s:options = "-F\n-v\n-input\n-inbuf\n-infile\n-outbuf"
 
 function! s:complete(ArgLead, CmdLine, CursorPos)
 	let l:CmdLine  = split(a:CmdLine, '\v[^\\]\zs\s+')
@@ -104,8 +104,8 @@ function! s:complete(ArgLead, CmdLine, CursorPos)
 		return s:options
 	elseif l:previous ==# '-input'
 		return join(getcompletion(a:ArgLead, 'buffer', v:true), "\n")
-	elseif l:previous ==# '-inbuf'
-		return ''
+	elseif l:previous ==# '-inbuf' || l:previous ==# '-outbuf'
+		return join(filter(range(1, bufnr('$')), {i,v -> bufexists(v)}), "\n")
 	elseif l:previous ==# '-infile'
 		return join(getcompletion(a:ArgLead, 'file', v:true), "\n")
 	elseif index(['run', 'stop'], l:previous) + 1 && len(l:CmdLine) == 2
