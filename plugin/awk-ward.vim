@@ -1,4 +1,4 @@
-" Copyright 2017 Alejandro Sanchez
+" Copyright 2017-2020 Alejandro Sanchez
 " 
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to
@@ -89,7 +89,7 @@ endfunction
 " ----------------------------------------------------------------------------
 " This variable will be used for completion, but we define them outside the
 " function to avoid re-allocating them every time
-let s:options = "-F\n-v\n-input\n-inbuf\n-infile\n-outbuf"
+let s:options = "-F\n-v\n-input\n-inbuf\n-infile\n-output\n-outbuf"
 
 function! s:complete(ArgLead, CmdLine, CursorPos)
 	let l:CmdLine  = split(a:CmdLine, '\v[^\\]\zs\s+')
@@ -102,7 +102,7 @@ function! s:complete(ArgLead, CmdLine, CursorPos)
 		return "setup\n" .. s:options
 	elseif l:previous ==# 'setup'
 		return s:options
-	elseif l:previous ==# '-input'
+	elseif l:previous ==# '-input' || l:previous ==# '-output'
 		return join(getcompletion(a:ArgLead, 'buffer', v:true), "\n")
 	elseif l:previous ==# '-inbuf' || l:previous ==# '-outbuf'
 		return join(filter(range(1, bufnr('$')), {i,v -> bufexists(v)}), "\n")
@@ -150,6 +150,9 @@ function! s:parse_setup_args(args)
 		elseif l:arg ==# '-outbuf'
 			let l:i += 1
 			let l:kwargs['outbuf'] = eval(a:args[l:i])
+		elseif l:arg ==# '-output'
+			let l:i += 1
+			let l:kwargs['outbuf'] = bufnr(a:args[l:i])
 		else
 			throw 'AwkWardUnknownOption:' . l:arg
 		endif
