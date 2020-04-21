@@ -59,11 +59,12 @@ specify your own Awk implementation you can set the value of the |g:awkprg|,
 
 ------------------------------------------------------------------------------
 g:awkprg  (default "awk")                                           *g:awkprg*
-b:awkprg                                                            *b:awkprg*
 t:awkprg                                                            *t:awkprg*
+b:awkprg                                                            *b:awkprg*
 
 Global, tab-local and buffer-local setting for the path to the Awk binary in
-ascending order or precedence.
+increasing order or precedence. If a variable is not defined the next less
+relevant one is tried, until eventually falling back to the global default.
 
 
 
