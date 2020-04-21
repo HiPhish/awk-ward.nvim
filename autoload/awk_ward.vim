@@ -1,4 +1,4 @@
-" Copyright 2017 Alejandro Sanchez
+" Copyright 2017-2020 Alejandro Sanchez
 " 
 " Permission is hereby granted, free of charge, to any person obtaining a copy
 " of this software and associated documentation files (the "Software"), to
@@ -34,7 +34,12 @@ function! awk_ward#setup(progbuf, awk_options) abort
 	endif
 
 	" Determine the Awk implementation
-	let l:command = [get(b:,'awkprg',get(t:,'awkprg',get(g:,'awkprg','awk')))]
+	let l:command = [
+		\ get(b:, 'awkprg',
+			\ get(l:, 'awkprg',
+				\ get(t:, 'awkprg',
+					\ get(g:, 'awkprg', 'awk'))))
+	\ ]
 
 	" The buffer from which the program will be read
 	let l:awk_ward['progbuf'] = a:progbuf
