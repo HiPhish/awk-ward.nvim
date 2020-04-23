@@ -30,16 +30,16 @@ function! awk_ward#setup(progbuf, awk_options) abort
 	let l:awk_ward = getbufvar(a:progbuf, 'awk_ward', {})
 	if !empty(l:awk_ward)
 		echoerr 'Awk-ward: already set up for buffer' a:progbuf
-		throw 'AkwWardAlreadySetUp'
+		throw 'AwkWardAlreadySetUp'
 	endif
 
 	" Determine the Awk implementation
-	let l:command = [
-		\ get(b:, 'awkprg',
-			\ get(l:, 'awkprg',
-				\ get(t:, 'awkprg',
-					\ get(g:, 'awkprg', 'awk'))))
-	\ ]
+	let l:awkprg = get(b:, 'awkprg',
+		\ get(w:, 'awkprg',
+			\ get(t:, 'awkprg',
+				\ get(g:, 'awkprg', 'awk'))))
+
+	let l:command = [l:awkprg]  " Accumulate the command
 
 	" The buffer from which the program will be read
 	let l:awk_ward['progbuf'] = a:progbuf

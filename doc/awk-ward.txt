@@ -1,4 +1,4 @@
-*awk-ward.txt*	Live Awk programming for Neovim version 0.4+	Last change: 2020-04-21
+*awk-ward.txt*	Live Awk programming for Neovim version 0.4+	Last change: 2020-04-23
 
                                                                *awk-ward.nvim*
                ___           __                                __~
