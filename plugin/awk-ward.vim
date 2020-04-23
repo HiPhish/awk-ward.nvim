@@ -48,7 +48,7 @@ function! s:awk_ward(...)
 	if (a:0 >= 1 && a:000[0] ==# 'setup')
 		try
 			call awk_ward#setup(l:curbuf, s:parse_setup_args(a:000[1:]))
-		catch /AwkAlreadySetUp/
+		catch /AwkWardAlreadySetUp/
 		endtry
 		return
 	elseif (a:0 == 1 && a:000[0] ==# 'run')
