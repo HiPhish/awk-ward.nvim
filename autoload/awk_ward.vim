@@ -86,7 +86,7 @@ function! awk_ward#setup(progbuf, awk_options) abort
 	endif
 	if has_key(a:awk_options,'vars')
 		for [l:var, l:val] in a:awk_options['vars']
-			call add(l:command, ['-v', l:val.'='.l:var])
+			call extend(l:command, ['-v', l:val.'='.l:var])
 		endfor
 	endif
 	call extend(l:command, ['-f', l:awk_ward['progfile']])
