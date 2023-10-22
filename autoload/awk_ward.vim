@@ -82,7 +82,7 @@ function! awk_ward#setup(progbuf, awk_options) abort
 
 	" Build up the Awk command
 	if has_key(a:awk_options, 'fs')
-		call extend(l:command, ['-F'], a:awk_options['fs']))
+		call extend(l:command, ['-F', a:awk_options['fs']])
 	endif
 	if has_key(a:awk_options,'vars')
 		for [l:var, l:val] in a:awk_options['vars']
