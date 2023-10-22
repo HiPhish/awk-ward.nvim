@@ -25,7 +25,7 @@ TABLE OF CONTENTS                                          *awk-ward-contents*
 INTRODUCTION                                           *awk-ward-introduction*
 
 Awk is a domain-specific programming language for transforming text files. As
-such regular REPL is not appropriate for running Awk programs live, we need
+such a regular REPL is not appropriate for running Awk programs live, we need
 two separate inputs: the program and the text to transform. Awk-ward makes it
 easy to edit and preview your Awk scripts live by spawning an Awk process and
 writing the result to an output buffer.
@@ -42,7 +42,7 @@ specify your own Awk implementation you can set the value of the |g:awkprg| or
 
 
 ------------------------------------------------------------------------------
-g:awkprg (default "awk")                                            *g:awkprg*
+g:awkprg  (default "awk")                                           *g:awkprg*
 
 Global setting for the path to the Awk binary. See also |b:awkprg|.
 
@@ -70,11 +70,11 @@ The option `-F` options passes {fs} as the record seperator to Awk.
 The `-v` option passes {value} as the {var} to Awk. There can be mutliple such
 pairs given and they will all get passed to Awk. Use `\=` to escape `=` in the
 names of {var} and {value}, the escape will be removed before passing them on
-the Awk.
+to Awk. Each individual {var}={value} pair must be preceeded by `-v`.
 
 `-infile` and `-inbuf` are mutually exclusive and specify the input file or
 input buffer to use. If a file is chosen no input buffer will be opened. If
-none are specified then a new 'nofile' input buffer will be created.
+none are specified then a new 'buftype'="nofile" input buffer will be created.
 
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 
@@ -100,8 +100,12 @@ yet been set up.
 ------------------------------------------------------------------------------
 AwkWardStop({b})                                               *AwkWardStop()*
 
-Wipe the output buffer (if it exists) and the output buffer associated with
-the program buffer {b}, and delete the |b:awk_ward| variable.
+Perform the following on the Awk-ward setup of buffer {b}:
+
+  - wipe the output buffer
+  - wipe the input buffer if it was created by Awk-ward
+  - delete autocommands set up by Awk-ward
+  - Delete the |b:awk_ward| variable.
 
 
 
