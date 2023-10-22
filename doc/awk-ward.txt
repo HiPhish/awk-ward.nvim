@@ -13,11 +13,11 @@ License: MIT License
 ==============================================================================
 TABLE OF CONTENTS                                          *awk-ward-contents*
 
-    1. Introduction...................................... |awk-ward-intro|
-    2. Setup and configuration........................... |awk-ward-setup|
-    3. Commands.......................................... |awk-ward-commands|
-    4. Functions......................................... |awk-ward-functions|
-    5. Advanced.......................................... |awk-ward-advanced|
+    1. Introduction ..................................... |awk-ward-intro|
+    2. Setup and configuration .......................... |awk-ward-setup|
+    3. Commands ......................................... |awk-ward-commands|
+    4. Functions ........................................ |awk-ward-functions|
+    5. Advanced ......................................... |awk-ward-advanced|
 
 
 
@@ -75,7 +75,7 @@ of Awk-ward in the current buffer.
       ignored.
 
 Setup~
-Same as calling |AwkWardSetup()| with the current buffer as first argument.
+Same as calling |awk_ward#setup()| with the current buffer as first argument.
 
 The option `-F` options passes {fs} as the record seperator to Awk.
 
@@ -91,10 +91,10 @@ none are specified then a new 'buftype'="nofile" input buffer will be created.
 The exact handling of `-F` and `-v` is dependent on your Awk implementation.
 
 Run~
-Same as calling |AwkWardRun()| with the current buffer as argument.
+Same as calling |awk_ward#run()| with the current buffer as argument.
 
 Stop~
-Same as calling |AwkWardStop()| with the current buffer as argument.
+Same as calling |awk_ward#stop()| with the current buffer as argument.
 
 
 
@@ -102,21 +102,21 @@ Same as calling |AwkWardStop()| with the current buffer as argument.
 FUNCTIONS                                                 *awk-ward-functions*
 
 ------------------------------------------------------------------------------
-AwkWardSetup({b}, {args})                                     *AwkWardSetup()*
+awk_ward#setup({b}, {args})                                 *awk_ward#setup()*
 
 Set up Awk-ward with the settings {args} for buffer handle {b}. {args} is a
 list whose contents are the same as the arguments accepted by |:AwkWard|.
 
 
 ------------------------------------------------------------------------------
-AwkWardRun({b})                                                 *AwkWardRun()*
+awk_ward#run({b})                                             *awk_ward#run()*
 
 Run Awk-ward on the buffer {b}. It is an error to run AwkWard if it has not
 yet been set up.
 
 
 ------------------------------------------------------------------------------
-AwkWardStop({b})                                               *AwkWardStop()*
+awk_ward#stop({b})                                           *awk_ward#stop()*
 
 Perform the following on the Awk-ward setup of buffer {b}:
 
