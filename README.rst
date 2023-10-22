@@ -10,6 +10,9 @@ buffer. Best of all, you don't even have to write your program or data to disc,
 Awk-ward will read straight from the buffer, and you can experiment without
 breaking any of your programs.
 
+.. image:: doc/screenshot.png
+   :align: center
+
 
 Setup and quick start
 #####################
@@ -46,8 +49,9 @@ Once you exit insert-mode the output buffer will show the Awk output
 
 Note that you did not have to save the input buffer, the output gets updated
 live. If you want to change your program you can run the `:AwkWard` command on
-its buffer again to process the input with the new program. If you wish to add
-live updating to the program as well add an auto command to its buffer:
+the program buffer again to process the input with the new program. If you wish
+to add live updating to the program as well add an auto command to the program
+buffer:
 
 .. code:: vim
 
