@@ -48,14 +48,7 @@ Once you exit insert-mode the output buffer will show the Awk output
    123 Doe John
 
 Note that you did not have to save the input buffer, the output gets updated
-live. If you want to change your program you can run the `:AwkWard` command on
-the program buffer again to process the input with the new program. If you wish
-to add live updating to the program as well add an auto command to the program
-buffer:
-
-.. code:: vim
-
-   autocomd <buffer> TextChanged,InsertLeave :AwkWard
+live. The output also updates live when you edit the program buffer.
 
 
 Status of the project
