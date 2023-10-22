@@ -17,7 +17,3 @@ Live updating the program
    It is possible to add an auto command to the program buffer to update the
    output when the program changes. Should this be done by default when
    starting Awk-ward?
-
-Command or function to stop Awk-ward
-   Should this be provided as well? Then the user would have full control over
-   when to start, run and stop Awk-ward.

@@ -59,7 +59,7 @@ endfunction
 "
 "  Takes the same arguments as the command, but as a list.
 " ----------------------------------------------------------------------------
-function! SetupAwkWard(prog, args)
+function! AwkWardSetup(prog, args)
 	let l:kwargs = {'vars': []}
 	" Process arguments
 	let l:i = 0
@@ -95,7 +95,7 @@ endfunction
 " ----------------------------------------------------------------------------
 "  Run Awk-ward on a buffer where it has already been set up
 " ----------------------------------------------------------------------------
-function! RunAwkWard(buf)
+function! AwkWardRun(buf)
 	let l:curbuf = nvim_get_current_buf()
 	call nvim_set_current_buf(a:buf)
 	try
@@ -106,7 +106,27 @@ function! RunAwkWard(buf)
 		call nvim_set_current_buf(l:curbuf)
 	endtry
 	call l:Callback()
+endfunction
 
+
+" ----------------------------------------------------------------------------
+"  Stop Awk-Ward from running
+"
+"  Wipes the input- and output buffers and deletes all Awk-ward settings.
+" ----------------------------------------------------------------------------
+function! AwkWardStop(buf)
+	try
+		let l:awk_ward = nvim_buf_get_var(a:buf, 'awk_ward')
+	catch
+		throw 'Cannot stop Awk-ward in buffer where it as never started'
+	endtry
+
+	execute 'bwipeout' l:awk_ward['out']
+	if has_key(l:awk_ward, 'inbuf')
+		execute 'bwipeout' l:awk_ward['inbuf']
+	endif
+
+	call nvim_buf_del_var(a:buf, 'awk_ward')
 endfunction
 
 
@@ -180,7 +200,6 @@ function! s:prepare_awkward(prog, kwargs)
 	let l:in = has_key(a:kwargs, 'infile') ? a:kwargs.infile : a:kwargs.inbuf
 	let l:Callback = {-> s:awk_ward(l:awk_cmd, a:prog, l:progfile, l:in, l:outbuf)}
 	call nvim_set_current_win(l:progwin)
-	let b:awk_ward = {'callback': l:Callback}
 
 	" A new buffer for input was created, set up the auto command
 	" TODO: the auto command has to be set up even if the buffer did already
@@ -199,6 +218,14 @@ function! s:prepare_awkward(prog, kwargs)
 			exe 'au TextChanged,InsertLeave <buffer> '.l:callback
 		augroup END
 		call nvim_set_current_win(l:progwin)
+	endif
+
+	" Build the Awk-ward settings dictionary
+	let b:awk_ward = {'callback': l:Callback, 'out': l:outbuf}
+	if has_key(a:kwargs, 'infile')
+		let b:awk_ward['infile'] = a:kwargs.infile
+	else
+		let b:awk_ward['inbuf'] = a:kwargs.inbuf
 	endif
 
 	call l:Callback()
