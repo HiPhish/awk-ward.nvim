@@ -27,7 +27,6 @@ let g:awk_ward_nvim = v:true
 
 " ----------------------------------------------------------------------------
 "  Keyword arguments:
-"    -prog     Buffer containing the program to run (default current buffer)
 "    -F        Record seperator
 "    -v        var=value pairs (use \= to escape a =)
 "    -inbuf    Buffer handle of the input buffer
@@ -53,12 +52,13 @@ function! s:awk_ward(...)
 		return
 	endif
 
-	" If Awk-ward was established for this buffer run it, otherwise set it up
-	try
-		call awk_ward#run(l:curbuf)
-	catch
-		call awk_ward#setup(l:curbuf, a:000)
-	endtry
+	" Default behaviour: restart Awk-ward if arguments were provided, just
+	" re-run if no args were provided.
+	if a:0 > 0
+		try | call awk_ward#stop(l:curbuf) | catch | endtry
+	endif
+	try | call awk_ward#setup(l:curbuf, a:000) | catch | endtry
+	call awk_ward#run(l:curbuf)
 endfunction
 
 
