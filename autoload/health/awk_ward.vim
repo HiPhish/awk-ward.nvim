@@ -19,12 +19,12 @@
 " IN THE SOFTWARE.
 
 function! health#awk_ward#check() abort
-	call health#report_start('awk_ward')
+	call v:lua.vim.health.start('awk_ward')
 	let l:awkprg = get(g:, 'awkprg', 'awk')
 	if executable(l:awkprg)
-		call health#report_ok('Awk binary "'.l:awkprg.'" found')
+		call v:lua.vim.health.ok('Awk binary "'.l:awkprg.'" found')
 	else
-		call health#report_error('Awk binary "'.l:awkprg.'" not found',
+		call v:lua.vim.health.error('Awk binary "'.l:awkprg.'" not found',
 			\ ['Install Awk on your system',
 			\  'Set the value of g:awkprg to the path of the binary',
 			\  'To use the default value do not define g:awkprg'])
