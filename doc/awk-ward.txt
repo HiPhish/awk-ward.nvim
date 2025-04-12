@@ -1,15 +1,9 @@
-*awk-ward.txt*	Live Awk programming for Neovim version 0.4+	Last change: 2020-04-23
+*awk-ward.txt*	Live Awk programming for Neovim version 0.4+	Last change: 2025-04-12
 
                                                                *awk-ward.nvim*
-               ___           __                                __~
-              /   |_      __/ /__     _      ______ __________/ /~
-             / /| | | /| / / //_/____| | /| / / __ `/ ___/ __  /~
-            / ___ | |/ |/ / ,< /_____/ |/ |/ / /_/ / /  / /_/ /~
-           /_/  |_|__/|__/_/|_|      |__/|__/\__,_/_/   \__,_/~
 
-
-Author: Alejandro "HiPhish" Sanchez
-License: MIT (Expat) License
+SPDX-FileCopyrightText: © 2022 Alejandro "HiPhish" Sanchez
+SPDX-License-Identifier: CC0-1.0
 
 Repository:
     - https://gitlab.com/HiPhish/awk-ward.nvim

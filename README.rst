@@ -1,3 +1,6 @@
+.. SPDX-FileCopyrightText: © 2022 Alejandro "HiPhish" Sanchez
+.. SPDX-License-Identifier: CC0-1.0
+
 .. default-role:: code
 
 #######################################
@@ -67,6 +70,8 @@ for new ideas.
 License
 #######
 
-Released under the MIT (Expat) license, see the COPYING_ file for details.
+The source code is released under the MIT (Expat) license, the documentation
+and supporting test files under the CC0-1.0 license.  See the LICENSES_
+directory for details.
 
-.. _COPYING: COPYING.txt
+.. _LICENSES: LICENSES
